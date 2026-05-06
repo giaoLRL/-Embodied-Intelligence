@@ -259,9 +259,37 @@ It is composed of a number of modules whose functions are described below. Some 
 
 The configurator module takes input from all other modules and configures them for the task at hand by modulating their parameters and their attention circuits. In particular, the configurator may prime the perception, world model, and cost modules to fulfill a particular goal.
 
+# 3 自主智能体模型架构
+
+本文所提出的自主智能体架构如图 2 所示。
+
+该架构由多个功能模块构成，各模块的作用将在下文说明。其中部分模块支持实时动态配置，即模块的具体工作模式由配置器模块决定。
+
+配置器的核心职能是执行管控：当给定一项待执行任务时，它会提前为感知模块、世界模型模块、代价模块和行动器模块做任务专属配置，并对这些下游模块的参数进行调控。
+
+配置器模块接收其余所有模块的输入，通过调节各模块的参数与注意力通路，完成对各模块的任务适配配置。具体来说，配置器可以预先设定感知模块、世界模型模块与代价模块的工作状态，使其朝着特定目标运行。
+
 The perception module receives signals from sensors and estimates the current state of the world. For a given task, only a small subset of the perceived state of the world is relevant and useful. The perception module may represent the state of the world in a hierarchical fashion, with multiple levels of abstraction. The configurator primes the perception system to extract the relevant information from the percept for the task at hand.
 
+感知模块接收传感器采集的信号，并估计当前的世界状态。
+针对某一特定任务，感知到的世界状态中仅有一小部分信息是相关且有利用价值的。
+感知模块能够以层级化结构、在多层抽象层级上对世界状态进行表征。
+配置器会预先调控感知系统，使其从感知信息中提取与当前任务相关的有效信息。
+
 The world model module constitutes the most complex piece of the architecture. Its role is twofold: (1) estimate missing information about the state of the world not provided by perception, (2) predict plausible future states of the world. The world model may predict natural evolutions of the world, or may predict future world states resulting from a sequence of actions proposed by the actor module. The world model may predict multiple plausible world states, parameterized by latent variables that represent the uncertainty about the world state. The world model is a kind of "simulator" of the relevant aspects of world. What aspects of the world state is relevant depends on the task at hand. The configurator configures the world model to handle the situation at hand. The predictions are performed within an abstract representation space that contains information relevant to the task at hand. Ideally, the world model would manipulate representations of the world state at multiple levels of abstraction, allowing it to predict over multiple time scales.
+
+世界模型模块是整套架构中最复杂的组成部分。
+
+它有两大核心作用：  
+（1）补全感知模块未能提供的世界状态缺失信息；  
+（2）预测合理且有可能发生的未来世界状态。
+
+世界模型既可以预测世界的自然演化过程，也能根据行动器模块给出的动作序列，预测由此引发的未来世界状态。
+它能够输出多种合理的世界状态预测结果，并通过隐变量对这些结果做**参数化表征**，以此刻画世界状态的不确定性。
+世界模型相当于一个**针对世界关键特征的仿真模拟器**。
+世界状态中哪些特征属于有效相关信息，由当前任务决定；配置器会对世界模型进行专属配置，使其适配当下场景。
+模型的所有预测运算都在**抽象表征空间内进行**，该空间只保留与当前任务相关的信息。
+理想情况下，世界模型能够在多层抽象层级上处理世界状态表征，进而实现多时间尺度的预测。
 
 A key issue is that the world model must be able to represent multiple possible predictions of the world state. The natural world is not completely predictable. This is particularly true if it contains other intelligent agents that are potentially adversarial. But it is often true even when the world only contains inanimate objects whose behavior is chaotic, or whose state is not fully observable.
 
