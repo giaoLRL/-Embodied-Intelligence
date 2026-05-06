@@ -193,26 +193,63 @@ than a separate model for every situation, knowledge about how the world works m
 be shared across tasks. This may enable reasoning by analogy, by applying the model
 configured for one situation to another situation
 
-但人类或动物的大脑，能否容纳生存所需的全部世界模型？本文提出一项假设：人类和动物的前额叶皮层中，仅存在一个世界模型引擎。该引擎可针对当前任务进行动态配置。相较于为每种场景单独构建模型，单一可配置的世界模型引擎能让世界运行规律的知识在不同任务间共享，进而实现类比推理—— 将适配某一场景的模型配置，迁移应用到另一新场景中。
+但人类或动物的大脑，能否容纳生存所需的全部世界模型？本文提出一项假设：**人类和动物的前额叶皮层中，仅存在一个世界模型引擎**。该引擎可针对当前任务进行动态配置。相较于为每种场景单独构建模型，单一可配置的世界模型引擎能让世界运行规律的知识在不同任务间共享，进而实现类比推理—— 将适配某一场景的模型配置，迁移应用到另一新场景中。
 
 
 To make things concrete, I will directly dive into a description of the proposed model.
+
+为使论述更具体直观，我将直接展开对所提模型的详细阐述。
 
 ![](_page_5_Picture_0.jpeg)
 
 Figure 2: A system architecture for autonomous intelligence. All modules in this model are assumed to be "differentiable", in that a module feeding into another one (through an arrow connecting them) can get gradient estimates of the cost's scalar output with respect to its own output.
 
+本模型中的所有模块均设定为**可微模块**；具体而言，若一个模块向另一模块传输信息（模块间以箭头连接），则该模块能够求解**代价函数**标量输出关于自身输出的梯度估计。
+
+> #### 可微模块
+> 整个自主智能架构被拆成一个个独立功能单元：感知模块、世界模型模块、代价模块、行动器模块、短期记忆、JEPA 等，每一个单元就是一个模块；
+> 
+> 可微不是单纯数学上 “函数可求导”，而是：
+> 
+> 信息在模块之间前后流转时，最终的损失 / 代价（论文里叫能量）可以顺着网络反向传回去，每个模块都能知道：自己的输出到底对最终好坏（代价高低）产生了多大影响；
+> 
+> 简单说：模块能接收梯度、能回传梯度、支持梯度反向传播，就是论文里的可微模块。
+> 
+> #### 为什么要全部可微？
+> **兼容梯度式学习**，当前主流深度学习依靠梯度下降训练，全可微架构能端到端训练整套智能系统，不用割裂各个模块。
+> 
+> **让推理、规划能用梯度求解**，传统符号推理和梯度学习不兼容；全可微后，智能体的推理、分层规划（Mode2）可以直接用梯度优化找最优动作序列。
+>
+> **实现全局反向传播**，代价 / 能量的梯度可以一路反向穿过世界模型、感知模块、行动器，更新所有可训练模块的参数。
+>
+> **支撑分层 JEPA、自监督学习训练**，JEPA、分层世界模型、评论家模块的自监督训练，全都依赖整套架构可微才能完成梯度更新。
+>
+
 <span id="page-5-0"></span>The configurator module takes inputs (not represented for clarity) from all other modules and configures them to perform the task at hand.
+
+配置器模块接收其余所有模块的输入（为图示简洁，图中未画出该部分输入），并对各模块进行参数配置，使其适配并执行当前任务。
 
 The perception module estimates the current state of the world.
 
+感知模块负责估计当前的世界状态。
+
+
 The world model module predicts possible future world states as a function of imagined actions sequences proposed by the actor.
+
+世界模型模块以行动器提出的假想动作序列为依据，预测未来各种可能的世界状态。
 
 The cost module computes a single scalar output called "energy" that measures the level of discomfort of the agent. It is composed of two sub-modules, the intrinsic cost, which is immutable (not trainable) and computes the immediate energy of the current state (pain, pleasure, hunger, etc), and the critic, a trainable module that predicts future values of the intrinsic cost.
 
+代价模块会输出一个标量值，命名为能量，用来衡量智能体的不适程度。该模块包含两个子模块：
+一个是内在代价子模块，结构固定、不可训练，用于计算当前状态的瞬时能量（对应痛苦、愉悦、饥饿等本能感受）；另一个是评价器（评论家）子模块，属于可训练模块，负责预测内在代价的未来取值。
+
 The short-term memory module keeps track of the current and predicted world states and associated intrinsic costs.
 
+短期记忆模块持续记录当前世界状态、预测的未来世界状态，以及与之对应的内在代价值。
+
 The actor module computes proposals for action sequences. The world model and the critic compute the possible resulting outcomes. The actor can find an optimal action sequence that minimizes the estimated future cost, and output the first action in the optimal sequence. See Section [3](#page-6-0) for details.
+
+行动器模块生成候选动作序列。由世界模型和评价器共同推算这些动作序列可能引发的后续结果。行动器能够求解出使未来预估代价最小化的最优动作序列，并输出该最优序列中的第一个动作。详细说明参见第 3 节。
 
 # <span id="page-6-0"></span>3 A Model Architecture for Autonomous Intelligence
 
