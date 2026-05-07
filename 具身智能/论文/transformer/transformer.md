@@ -453,4 +453,4 @@ $$
 > Attention还有一个理解就是：“**让token从别的token里获取信息**”
 
 ### Attention核心本质
-Query 去 Key 空间检索相关 token，然后读取对应 Value 内容，并融合成新的上下文表示。
+Query 去 Key 空间检索相关 token，然后读取对应 Value 内容，并融合成新的上下文表示，这个结果不是该token的原义，而是通过学习别的token产生的新理解。
